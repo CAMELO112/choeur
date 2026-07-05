@@ -3,70 +3,81 @@ import { useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 
 export default function Upload() {
-const [title, setTitle] = useState('')
-const [artistName, setArtistName] = useState('')
-const [file, setFile] = useState(null)
-const [message, setMessage] = useState(null)
-const [error, setError] = useState(null)
+  const [title, setTitle] = useState('')
+  const [artistName, setArtistName] = useState('')
+  const [file, setFile] = useState(null)
+  const [message, setMessage] = useState(null)
+  const [error, setError] = useState(null)
 
 async function handleUpload(e) {
-e.preventDefault()
-setError(null)
-setMessage(null)
+  e.preventDefault()
+  setError(null)
+  setMessage(null)
 
-const { data: { user } } = await supabase.auth.getUser()
-if (!user) {
-setError('Tu dois etre connecte pour uploader un morceau.')
-return
-}
-if (!file) {
-setError('Choisis un fichier audio.')
-return
-}
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    setError('Tu dois etre connecte pour uploader un morceau.')
+    return
+  }
+  if (!file) {
+    setError('Choisis un fichier audio.')
+    return
+  }
 
-const filePath = user.id + '/' + Date.now() + '_' + file.name
-const { error: uploadError } = await supabase.storage
-.from('audio')
-.upload(filePath, file)
+  // Cree le profil s'il n'existe pas encore (au cas ou le trigger automatique aurait echoue)
+  const { error: profileError } = await supabase.from('profiles').upsert(
+    { id: user.id, username: user.email },
+    { onConflict: 'id', ignoreDuplicates: true }
+    )
 
-if (uploadError) {
-setError(uploadError.message)
-return
-}
+  if (profileError) {
+    setError('Erreur de profil : ' + profileError.message)
+    return
+  }
 
-const { data: publicUrlData } = supabase.storage
-.from('audio')
-.getPublicUrl(filePath)
+  const filePath = user.id + '/' + Date.now() + '_' + file.name
+  const { error: uploadError } = await supabase.storage
+  .from('audio')
+  .upload(filePath, file)
 
-const { error: insertError } = await supabase.from('tracks').insert({
-owner_id: user.id,
-title,
-artist_name: artistName,
-audio_url: publicUrlData.publicUrl,
-})
+  if (uploadError) {
+    setError(uploadError.message)
+    return
+  }
 
-if (insertError) {
-setError(insertError.message)
-return
-}
+  const { data: publicUrlData } = supabase.storage
+  .from('audio')
+  .getPublicUrl(filePath)
 
-setMessage('Morceau uploade avec succes !')
-setTitle('')
-setArtistName('')
-setFile(null)
+  const { error: insertError } = await supabase.from('tracks').insert({
+    owner_id: user.id,
+    title,
+    artist_name: artistName,
+    audio_url: publicUrlData.publicUrl,
+  })
+
+  if (insertError) {
+    setError(insertError.message)
+    return
+  }
+
+  setMessage('Morceau uploade avec succes !')
+  setTitle('')
+  setArtistName('')
+  setFile(null)
 }
 
 return (
-<div className="form-box">
-<h1>Uploader un morceau</h1>
-<form onSubmit={handleUpload}>
-<input placeholder="Titre" value={title} onChange={(e) => setTitle(e.target.value)} required />
-<input placeholder="Artiste" value={artistName} onChange={(e) => setArtistName(e.target.value)} required />
-<input type="file" accept="audio/*" onChange={(e) => setFile(e.target.files[0])} required />
-<button type="submit" className="btn">Uploader</button>
-</form>
+  <div className="form-box">
+  <h1>Uploader un morceau</h1>
+  <form onSubmit={handleUpload}>
+  <input placeholder="Titre" value={title} onChange={(e) => setTitle(e.target.value)} required />
+  <input placeholder="Artiste" value={artistName} onChange={(e) => setArtistName(e.target.value)} required />
+  <input type="file" accept="audio/*" onChange={(e) => setFile(e.target.files[0])} required />
+  <button type="submit" className="btn">Uploader</button>
+  </form>
 {error && <p className="error">{error}</p>}
-{message && <p className="success">{message}</p>}
-</div>
-)
-}
+ {message && <p className="success">{message}</p>}
+   </div>
+  )
+ }
