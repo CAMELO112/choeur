@@ -1,4 +1,5 @@
 import './globals.css'
+import NavBar from './components/NavBar'
 
 export const metadata = {
   title: 'Choeur',
@@ -11,11 +12,7 @@ export default function RootLayout({ children }) {
     <body>
     <header className="topbar">
     <a href="/" className="logo">Choeur</a>
-  <nav>
-    <a href="/upload">Uploader</a>
-  <a href="/login">Connexion</a>
-  <a href="/signup">Inscription</a>
-    </nav>
+  <NavBar />
     </header>
   <main>{children}</main>
     </body>
