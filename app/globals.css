@@ -87,3 +87,5 @@ audio { width: 100%; }
 
 .nav-user { color: var(--text-muted); font-size: 14px; margin-right: 12px; }
 .btn-link { background: none; border: none; color: var(--accent); cursor: pointer; font-size: 14px; padding: 0; }
+
+.topbar nav { display: flex; align-items: center; gap: 16px; }
