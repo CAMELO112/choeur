@@ -1,8 +1,10 @@
 'use client'
 import { useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
+import { useUser } from '../hooks/useUser'
 
 export default function Upload() {
+  const { user } = useUser()
   const [title, setTitle] = useState('')
   const [artistName, setArtistName] = useState('')
   const [file, setFile] = useState(null)
@@ -14,7 +16,6 @@ async function handleUpload(e) {
   setError(null)
   setMessage(null)
 
-  const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
     setError('Tu dois etre connecte pour uploader un morceau.')
     return
